@@ -3,9 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace OMSServiceMini.Models
 {
+    [Index("CategoryId", Name = "CategoriesProducts")]
+    [Index("CategoryId", Name = "CategoryID")]
+    [Index("ProductName", Name = "ProductName")]
+    [Index("SupplierId", Name = "SupplierID")]
+    [Index("SupplierId", Name = "SuppliersProducts")]
     public partial class Product
     {
         public Product()
@@ -30,15 +36,15 @@ namespace OMSServiceMini.Models
         public short? UnitsInStock { get; set; }
         public short? UnitsOnOrder { get; set; }
         public short? ReorderLevel { get; set; }
-        public bool? Discontinued { get; set; }
+        public bool Discontinued { get; set; }
 
-        [ForeignKey(nameof(CategoryId))]
+        [ForeignKey("CategoryId")]
         [InverseProperty("Products")]
         public virtual Category Category { get; set; }
-        [ForeignKey(nameof(SupplierId))]
+        [ForeignKey("SupplierId")]
         [InverseProperty("Products")]
         public virtual Supplier Supplier { get; set; }
-        [InverseProperty(nameof(OrderDetail.Product))]
+        [InverseProperty("Product")]
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }
     }
 }

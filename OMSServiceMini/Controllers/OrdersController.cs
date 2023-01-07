@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using OMSServiceMini.Data;
 using OMSServiceMini.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Threading;
+using OMSServiceMini.Services;
 
 namespace OMSServiceMini.Controllers
 {
@@ -42,6 +44,20 @@ namespace OMSServiceMini.Controllers
                 return NotFound("Заказ с данным Id не найден");
 
             return order;
+        }
+
+        [HttpPost]            
+        public async Task AddOrder([FromBody] Order order, CancellationToken token)
+        {
+            await this._northwindContext.AddAsync(order, token);
+            await _northwindContext.SaveChangesAsync(token);
+
+            var ordersByCountry = await this._northwindContext.OrdersByCountries.FirstOrDefaultAsync(x => x.CountryName == order.Customer.Country, token);
+
+            if (ordersByCountry != null)
+                ordersByCountry.OrdersCount++;
+            else
+                this._northwindContext.OrdersByCountries.Add(new() { CountryName = order.Customer.Country, OrdersCount = 1 });
         }
     }
 }

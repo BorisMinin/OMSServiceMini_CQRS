@@ -3,9 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace OMSServiceMini.Models
 {
+    [Index("CategoryName", Name = "CategoryName")]
     public partial class Category
     {
         public Category()
@@ -24,7 +26,7 @@ namespace OMSServiceMini.Models
         [Column(TypeName = "image")]
         public byte[] Picture { get; set; }
 
-        [InverseProperty(nameof(Product.Category))]
+        [InverseProperty("Category")]
         public virtual ICollection<Product> Products { get; set; }
     }
 }

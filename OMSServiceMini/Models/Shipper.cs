@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace OMSServiceMini.Models
 {
@@ -22,7 +23,7 @@ namespace OMSServiceMini.Models
         [StringLength(24)]
         public string Phone { get; set; }
 
-        [InverseProperty(nameof(Order.ShipViaNavigation))]
+        [InverseProperty("ShipViaNavigation")]
         public virtual ICollection<Order> Orders { get; set; }
     }
 }

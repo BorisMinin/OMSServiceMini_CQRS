@@ -3,9 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace OMSServiceMini.Models
 {
+    [Index("CompanyName", Name = "CompanyName")]
+    [Index("PostalCode", Name = "PostalCode")]
     public partial class Supplier
     {
         public Supplier()
@@ -40,7 +43,7 @@ namespace OMSServiceMini.Models
         [Column(TypeName = "ntext")]
         public string HomePage { get; set; }
 
-        [InverseProperty(nameof(Product.Supplier))]
+        [InverseProperty("Supplier")]
         public virtual ICollection<Product> Products { get; set; }
     }
 }

@@ -3,10 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace OMSServiceMini.Models
 {
     [Table("Order Details")]
+    [Index("OrderId", Name = "OrderID")]
+    [Index("OrderId", Name = "OrdersOrder_Details")]
+    [Index("ProductId", Name = "ProductID")]
+    [Index("ProductId", Name = "ProductsOrder_Details")]
     public partial class OrderDetail
     {
         [Key]
@@ -20,10 +25,10 @@ namespace OMSServiceMini.Models
         public short Quantity { get; set; }
         public float Discount { get; set; }
 
-        [ForeignKey(nameof(OrderId))]
+        [ForeignKey("OrderId")]
         [InverseProperty("OrderDetails")]
         public virtual Order Order { get; set; }
-        [ForeignKey(nameof(ProductId))]
+        [ForeignKey("ProductId")]
         [InverseProperty("OrderDetails")]
         public virtual Product Product { get; set; }
     }
