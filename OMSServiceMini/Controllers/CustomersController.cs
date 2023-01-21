@@ -1,11 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OMSServiceMini.Data;
+using OMSServiceMini.Models;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace OMSServiceMini.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class CustomersController : ControllerBase
+    public class CustomersController : BaseController
     {
         private readonly NorthwindContext _northwindContext;
 
@@ -15,14 +18,14 @@ namespace OMSServiceMini.Controllers
         }
 
         #region GET country without fax
-        //// get api/customeres/country
-        //[HttpGet("{country}")]
-        //public async Task<IEnumerable<Customer>> GetWithFax(string country)
-        //{
-        //    return await _northwindContext.Customers.
-        //        Where(c => c.Country == country && c.Fax != null).ToListAsync();
-        //    //.Select(s => new Customer{CustomerId = s.CustomerId});
-        //}
+        // get api/customeres/country
+        [HttpGet("{country}")]
+        public async Task<IEnumerable<Customer>> GetWithFax(string country)
+        {
+            return await _northwindContext.Customers.
+                Where(c => c.Country == country && c.Fax != null).ToListAsync();
+            //.Select(s => new Customer{CustomerId = s.CustomerId});
+        }
         #endregion
 
         #region GET without image
@@ -110,7 +113,7 @@ namespace OMSServiceMini.Controllers
         /// Получить общую сумму заказов для каждого покупателя
         /// </summary>
         /// <returns>Список id покупателей и общей суммой их заказа</returns>
-        
+
         // get api/customers
         //[HttpGet]
         //public async Task<IEnumerable<OrderDetail>> GetUnitPriceOfCustomers()

@@ -3,9 +3,7 @@ using OMSServiceMini.Data;
 
 namespace OMSServiceMini.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ShippersController : ControllerBase
+    public class ShippersController : BaseController
     {
         readonly NorthwindContext _northwindContext;
 

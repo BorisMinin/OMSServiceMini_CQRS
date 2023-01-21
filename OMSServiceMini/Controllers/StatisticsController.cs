@@ -3,14 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using OMSServiceMini.Data;
 using OMSServiceMini.Models;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace OMSServiceMini.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class StatisticsController : ControllerBase
+    public class StatisticsController : BaseController
     {
         private NorthwindContext _northwindContext;
 
@@ -23,6 +22,18 @@ namespace OMSServiceMini.Controllers
         public async Task<ActionResult<IEnumerable<OrdersByCountry>>> GetOrdersByCountries(CancellationToken token)
         {
             return await this._northwindContext.OrdersByCountries.ToListAsync(token);
+        }
+
+        [HttpGet("{topCountries}")]
+        public async Task<List<OrdersByCountry>> GetTopOrdersByCountriesByQuantity(CancellationToken token, [FromRoute] int topCountries)
+        {
+            var result = await this._northwindContext.OrdersByCountries
+                .AsNoTracking()
+                .OrderByDescending(x =>x.OrdersCount)
+                .Take(topCountries)
+                .ToListAsync();
+
+            return result;
         }
     }
 }

@@ -6,13 +6,10 @@ using OMSServiceMini.Data;
 using OMSServiceMini.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Threading;
-using OMSServiceMini.Services;
 
 namespace OMSServiceMini.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class OrdersController : ControllerBase
+    public class OrdersController : BaseController
     {
         readonly NorthwindContext _northwindContext;
 
@@ -23,41 +20,87 @@ namespace OMSServiceMini.Controllers
 
         // GET: api/orders
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Order>>> GetAllOrders()
+        public async Task<ActionResult<IEnumerable<Order>>> GetAllOrders(CancellationToken token)
         {
             var orders = await _northwindContext.Orders
                 //.Include(o => o.OrderDetails)
-
-                .ToListAsync();
+                .AsNoTracking()
+                .ToListAsync(token);
             return orders;
         }
 
         // GET: api/orders/10248
         [HttpGet("{id}")]
-        public async Task<ActionResult<Order>> GetOrder(int id)
+        public async Task<ActionResult<Order>> GetOrder(int id, CancellationToken token)
         {
             var order = await _northwindContext.Orders
+                .AsNoTracking()
                 .Where(o => o.OrderId == id)
                 .Include(o => o.OrderDetails)
-                .FirstOrDefaultAsync();
-            if (order == null) 
+                .FirstOrDefaultAsync(token);
+            if (order == null)
                 return NotFound("Заказ с данным Id не найден");
 
             return order;
         }
 
-        [HttpPost]            
+        [HttpPost]
         public async Task AddOrder([FromBody] Order order, CancellationToken token)
         {
-            await this._northwindContext.AddAsync(order, token);
-            await _northwindContext.SaveChangesAsync(token);
+            using var transaction = await _northwindContext.Database.BeginTransactionAsync();
 
-            var ordersByCountry = await this._northwindContext.OrdersByCountries.FirstOrDefaultAsync(x => x.CountryName == order.Customer.Country, token);
+            try
+            {
+                await this._northwindContext.Orders.AddAsync(order, token);
+                await this._northwindContext.SaveChangesAsync(token);
 
-            if (ordersByCountry != null)
-                ordersByCountry.OrdersCount++;
-            else
-                this._northwindContext.OrdersByCountries.Add(new() { CountryName = order.Customer.Country, OrdersCount = 1 });
+                var countryName = await GetCountryNameByCustomerId(order.CustomerId);
+
+                var ordersByCountry = await this._northwindContext.OrdersByCountries
+                    .FirstOrDefaultAsync(x => x.CountryName == order.Customer.Country, token);
+
+                if (ordersByCountry != null)
+                    ordersByCountry.OrdersCount++;
+                else
+                    await this._northwindContext.OrdersByCountries
+                    .AddAsync(new() { CountryName = order.Customer.Country, OrdersCount = 1 }, token);
+
+                await this._northwindContext.SaveChangesAsync(token);
+                await transaction.CommitAsync(token);
+            }
+            catch (System.Exception)
+            {
+                await transaction.RollbackAsync(token);
+                throw;
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateOrder(int id, Order order, CancellationToken token)
+        {
+            if (id != order.OrderId)
+                return BadRequest();
+
+            this._northwindContext.Entry(order).State = EntityState.Modified;
+
+            try
+            {
+                await this._northwindContext.SaveChangesAsync(token);
+            }
+            catch (System.Exception)
+            {
+                throw;
+            }
+
+            return NoContent();
+        }
+
+        private async Task<string> GetCountryNameByCustomerId(string customerId)
+        {
+            var customer = await this._northwindContext.Customers
+                .FirstOrDefaultAsync(x => x.CustomerId == customerId);
+
+            return customer.Country;
         }
     }
 }

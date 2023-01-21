@@ -7,9 +7,7 @@ using OMSServiceMini.Models;
 
 namespace OMSServiceMini.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ProductsController : ControllerBase
+    public class ProductsController : BaseController
     {
         readonly NorthwindContext _northwindContext;
         public ProductsController(NorthwindContext northwindContext)
@@ -22,18 +20,7 @@ namespace OMSServiceMini.Controllers
         //[HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetAllProducts()
         {
-            //public async Task<IEnumerable<Product>> GetAllProducts
             return await _northwindContext.Products.ToListAsync(); // easy version, without ActionResult
-            //return await _northwindContext.Products.Select(p => new Product
-            //{
-            //    ProductId = p.ProductId,
-            //    ProductName = p.ProductName,
-            //    Supplier = p.Supplier,
-            //    Category = p.Category,
-            //    UnitPrice = p.UnitPrice,
-            //    UnitsInStock = p.UnitsInStock,
-            //    Discontinued = p.Discontinued
-            //}).ToListAsync();
         }
 
         // Get api/products/id

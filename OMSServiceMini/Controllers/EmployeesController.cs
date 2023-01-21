@@ -8,9 +8,7 @@ using OMSServiceMini.Models;
 
 namespace OMSServiceMini.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class EmployeesController : Controller
+    public class EmployeesController : BaseController
     {
         private readonly NorthwindContext _northwindContext;
 
