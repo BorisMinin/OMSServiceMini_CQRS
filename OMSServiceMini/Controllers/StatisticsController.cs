@@ -15,19 +15,19 @@ namespace OMSServiceMini.Controllers
 
         public StatisticsController(NorthwindContext northwindContext)
         {
-            this._northwindContext = northwindContext;
+            _northwindContext = northwindContext;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<OrdersByCountry>>> GetOrdersByCountries(CancellationToken token)
         {
-            return await this._northwindContext.OrdersByCountries.ToListAsync(token);
+            return await _northwindContext.OrdersByCountries.ToListAsync(token);
         }
 
         [HttpGet("{topCountries}")]
         public async Task<List<OrdersByCountry>> GetTopOrdersByCountriesByQuantity(CancellationToken token, [FromRoute] int topCountries)
         {
-            var result = await this._northwindContext.OrdersByCountries
+            var result = await _northwindContext.OrdersByCountries
                 .AsNoTracking()
                 .OrderByDescending(x =>x.OrdersCount)
                 .Take(topCountries)

@@ -6,6 +6,7 @@ using OMSServiceMini.Data;
 using OMSServiceMini.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Threading;
+using System;
 
 namespace OMSServiceMini.Controllers
 {
@@ -51,24 +52,15 @@ namespace OMSServiceMini.Controllers
 
             try
             {
-                await this._northwindContext.Orders.AddAsync(order, token);
-                await this._northwindContext.SaveChangesAsync(token);
+                await _northwindContext.Orders.AddAsync(order, token);
+                await _northwindContext.SaveChangesAsync(token);
 
-                var countryName = await GetCountryNameByCustomerId(order.CustomerId);
+                await UpdateOrdersByCountries(order, token);
 
-                var ordersByCountry = await this._northwindContext.OrdersByCountries
-                    .FirstOrDefaultAsync(x => x.CountryName == order.Customer.Country, token);
-
-                if (ordersByCountry != null)
-                    ordersByCountry.OrdersCount++;
-                else
-                    await this._northwindContext.OrdersByCountries
-                    .AddAsync(new() { CountryName = order.Customer.Country, OrdersCount = 1 }, token);
-
-                await this._northwindContext.SaveChangesAsync(token);
+                await _northwindContext.SaveChangesAsync(token);
                 await transaction.CommitAsync(token);
             }
-            catch (System.Exception)
+            catch (Exception)
             {
                 await transaction.RollbackAsync(token);
                 throw;
@@ -81,11 +73,11 @@ namespace OMSServiceMini.Controllers
             if (id != order.OrderId)
                 return BadRequest();
 
-            this._northwindContext.Entry(order).State = EntityState.Modified;
+            _northwindContext.Entry(order).State = EntityState.Modified;
 
             try
             {
-                await this._northwindContext.SaveChangesAsync(token);
+                await _northwindContext.SaveChangesAsync(token);
             }
             catch (System.Exception)
             {
@@ -95,12 +87,28 @@ namespace OMSServiceMini.Controllers
             return NoContent();
         }
 
-        private async Task<string> GetCountryNameByCustomerId(string customerId)
+        private async Task<string> GetCountryNameByCustomerId(string customerId, CancellationToken token)
         {
-            var customer = await this._northwindContext.Customers
+            var customer = await _northwindContext.Customers
+                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.CustomerId == customerId);
 
             return customer.Country;
+        }
+
+        private async Task UpdateOrdersByCountries(Order order, CancellationToken token)
+        {
+            var countryName = await GetCountryNameByCustomerId(order.CustomerId, token);
+
+            var ordersByCountry = await _northwindContext.OrdersByCountries
+                .FirstOrDefaultAsync(x => x.CountryName == countryName, token);
+
+            if (ordersByCountry != null)
+                ordersByCountry.OrdersCount++;
+            else
+                await _northwindContext.OrdersByCountries
+                .AddAsync(new() { CountryName = countryName, OrdersCount = 1 }, token);
+
         }
     }
 }
