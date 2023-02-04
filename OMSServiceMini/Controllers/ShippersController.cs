@@ -5,7 +5,7 @@ namespace OMSServiceMini.Controllers
 {
     public class ShippersController : BaseController
     {
-        readonly NorthwindContext _northwindContext;
+        private readonly NorthwindContext _northwindContext;
 
         public ShippersController(NorthwindContext northwindContext)
         {

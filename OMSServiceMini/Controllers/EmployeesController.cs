@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OMSServiceMini.Data;
-using OMSServiceMini.Models;
+using OMSServiceMini.Models.NormalizedModels;
 
 namespace OMSServiceMini.Controllers
 {

@@ -3,7 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using OMSServiceMini.Data;
-using OMSServiceMini.Models;
+using OMSServiceMini.Models.NormalizedModels;
+using OMSServiceMini.Models.DenormalizedModels;
 using Microsoft.EntityFrameworkCore;
 using System.Threading;
 using System;
@@ -12,7 +13,7 @@ namespace OMSServiceMini.Controllers
 {
     public class OrdersController : BaseController
     {
-        readonly NorthwindContext _northwindContext;
+        private readonly NorthwindContext _northwindContext;
 
         public OrdersController(NorthwindContext northwindContext)
         {
@@ -46,7 +47,7 @@ namespace OMSServiceMini.Controllers
         }
 
         [HttpPost]
-        public async Task AddOrder([FromBody] Order order, CancellationToken token)
+        public async Task<ActionResult<Order>> AddOrder([FromBody] Order order, CancellationToken token)
         {
             using var transaction = await _northwindContext.Database.BeginTransactionAsync();
 
@@ -55,7 +56,8 @@ namespace OMSServiceMini.Controllers
                 await _northwindContext.Orders.AddAsync(order, token);
                 await _northwindContext.SaveChangesAsync(token);
 
-                await UpdateOrdersByCountries(order, token);
+                await UpdateOrdersByCountry(order, token);
+                await UpdateSalesByCategory(order, token);
 
                 await _northwindContext.SaveChangesAsync(token);
                 await transaction.CommitAsync(token);
@@ -65,6 +67,8 @@ namespace OMSServiceMini.Controllers
                 await transaction.RollbackAsync(token);
                 throw;
             }
+
+            return CreatedAtAction(nameof(GetOrder), new { id = order.OrderId }, order);
         }
 
         [HttpPut("{id}")]
@@ -91,12 +95,12 @@ namespace OMSServiceMini.Controllers
         {
             var customer = await _northwindContext.Customers
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.CustomerId == customerId);
+                .FirstOrDefaultAsync(x => x.CustomerId == customerId, token);
 
             return customer.Country;
         }
 
-        private async Task UpdateOrdersByCountries(Order order, CancellationToken token)
+        private async Task UpdateOrdersByCountry(Order order, CancellationToken token)
         {
             var countryName = await GetCountryNameByCustomerId(order.CustomerId, token);
 
@@ -109,6 +113,24 @@ namespace OMSServiceMini.Controllers
                 await _northwindContext.OrdersByCountries
                 .AddAsync(new() { CountryName = countryName, OrdersCount = 1 }, token);
 
+        }
+
+        private async Task UpdateSalesByCategory(Order order, CancellationToken token)
+        {
+            var salesByCategories = order
+                .OrderDetails
+                .GroupBy(x => x.Product.Category.CategoryName)
+                .Select(x => new { CategoryName = x.Key, Sales = x.Sum(x => x.UnitPrice * x.Quantity) });
+
+            foreach (var salesByCategory in salesByCategories)
+            {
+                var currentSaleByCategory = await _northwindContext.SalesByCategories.FirstOrDefaultAsync(x => x.CategoryName == salesByCategory.CategoryName, token);
+
+                if (currentSaleByCategory != null)
+                    currentSaleByCategory.Sales += salesByCategory.Sales;
+                else
+                    _northwindContext.SalesByCategories.Add(new() { CategoryName = salesByCategory.CategoryName, Sales = salesByCategory.Sales });
+            }
         }
     }
 }

@@ -3,13 +3,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OMSServiceMini.Data;
-using OMSServiceMini.Models;
+using OMSServiceMini.Models.NormalizedModels;
 
 namespace OMSServiceMini.Controllers
 {
     public class ProductsController : BaseController
     {
-        readonly NorthwindContext _northwindContext;
+        private readonly NorthwindContext _northwindContext;
         public ProductsController(NorthwindContext northwindContext)
         {
             _northwindContext = northwindContext;

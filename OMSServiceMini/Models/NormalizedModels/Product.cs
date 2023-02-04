@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace OMSServiceMini.Models
+namespace OMSServiceMini.Models.NormalizedModels
 {
     [Index("CategoryId", Name = "CategoriesProducts")]
     [Index("CategoryId", Name = "CategoryID")]

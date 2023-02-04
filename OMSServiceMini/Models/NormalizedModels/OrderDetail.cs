@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace OMSServiceMini.Models
+namespace OMSServiceMini.Models.NormalizedModels
 {
     [Table("Order Details")]
     [Index("OrderId", Name = "OrderID")]

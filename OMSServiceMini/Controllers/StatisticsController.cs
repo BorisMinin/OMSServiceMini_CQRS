@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿    using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OMSServiceMini.Data;
-using OMSServiceMini.Models;
+using OMSServiceMini.Models.DenormalizedModels;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -11,7 +11,7 @@ namespace OMSServiceMini.Controllers
 {
     public class StatisticsController : BaseController
     {
-        private NorthwindContext _northwindContext;
+        private readonly NorthwindContext _northwindContext;
 
         public StatisticsController(NorthwindContext northwindContext)
         {
@@ -33,6 +33,15 @@ namespace OMSServiceMini.Controllers
                 .Take(topCountries)
                 .ToListAsync();
 
+            return result;
+        }
+
+        [HttpGet("{SalesByCategories}")]
+        public async Task<ActionResult<IEnumerable<SalesByCategory>>> GetSalesByCategories(CancellationToken token)
+        {
+            var result = await _northwindContext.SalesByCategories
+                .AsNoTracking()
+                .ToListAsync(token);
             return result;
         }
     }

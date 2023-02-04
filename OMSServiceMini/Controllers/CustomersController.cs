@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OMSServiceMini.Data;
-using OMSServiceMini.Models;
+using OMSServiceMini.Models.NormalizedModels;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
