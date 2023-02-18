@@ -1,10 +1,14 @@
+﻿using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OMSServiceMini.AppHelpers;
 using OMSServiceMini.Data;
+using System;
+using System.Configuration;
 
 namespace OMSServiceMini
 {
@@ -20,6 +24,35 @@ namespace OMSServiceMini
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            #region In-Memory Cache
+            // настройки конфигураций 
+            services.Configure<CacheConfiguration>(Configuration.GetSection("CacheConfiguration"));
+
+            // для In-Memory Caching
+            services.AddMemoryCache();
+            services.AddTransient<MemoryCacheService>();
+
+            // todo: добавить для Redis
+            // для RedisCacheService
+
+            services.AddTransient<Func<CacheTech, ICacheService>>(serviceProvider => key =>
+            { // todo: по идее свич не нужен, так как используется только In-Memory Caching
+                switch (key)
+                {
+                    case CacheTech.Memory:
+                        return serviceProvider.GetService<MemoryCacheService>();
+                    // место для case для Redis
+                    default:
+                        return serviceProvider.GetService<MemoryCacheService>();
+                }
+            });
+
+            // строка подключения для хранения данных задания Hangfire
+            services.AddHangfire(x => x.UseSqlServerStorage(Configuration.GetConnectionString("OMSDatabase")));
+            services.AddHangfireServer();
+
+            #endregion
+
             services.AddControllers();
             string connection = Configuration.GetConnectionString("OMSDatabase");
             services.AddDbContext<NorthwindContext>(options => options.UseSqlServer(connection));
@@ -61,6 +94,9 @@ namespace OMSServiceMini
             app.UseRouting();
 
             app.UseAuthorization();
+
+            //путь, по которому отслеживается задания Hangfire через панель мониторинга 
+            app.UseHangfireDashboard("/jobs");
 
             app.UseEndpoints(endpoints =>
             {

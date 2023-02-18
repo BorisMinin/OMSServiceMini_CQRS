@@ -1,7 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OMSServiceMini.AppHelpers;
+using OMSServiceMini.CacheService;
 using OMSServiceMini.Data;
 using OMSServiceMini.Models.NormalizedModels;
 
@@ -10,17 +16,26 @@ namespace OMSServiceMini.Controllers
     public class CategoriesController : BaseController
     {
         private readonly NorthwindContext _northwindContext;
+        private Func<CacheTech, ICacheService> _cacheService;
+        private readonly string cacheKey = $"{typeof(Category)}";
+        private readonly static CacheTech cacheTech = CacheTech.Memory;
 
-        public CategoriesController(NorthwindContext northwindContext)
+        public CategoriesController(NorthwindContext northwindContext, Func<CacheTech, ICacheService> cacheService)
         {
             _northwindContext = northwindContext;
+            _cacheService = cacheService;
         }
 
         //get api/categories
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetAllCategory()
+        public async Task<List<Category>> GetAllCategory(CancellationToken token)
         {
-            return await _northwindContext.Categories.ToListAsync();
+            var categoryList = await _northwindContext.Categories.AsNoTracking().ToListAsync(token);
+
+            var cacheService = _cacheService(cacheTech).GetCache<Category>
+                (categoryList, cacheKey);
+
+            return cacheService;
         }
 
         #region GET with_image
@@ -88,6 +103,9 @@ namespace OMSServiceMini.Controllers
             _northwindContext.Categories.Add(newCategory);
             await _northwindContext.SaveChangesAsync();
 
+            BackgroundJob.Enqueue(() => _cacheService(cacheTech).RefreshCacheAsync<Category>
+            (newCategory, cacheKey));
+
             return CreatedAtAction(nameof(GetAllCategory),
                 new
                 {
@@ -124,6 +142,10 @@ namespace OMSServiceMini.Controllers
 
             _northwindContext.Entry(newCategory).State = EntityState.Modified;
             await _northwindContext.SaveChangesAsync();
+
+            BackgroundJob.Enqueue(() => _cacheService(cacheTech).RefreshCacheAsync<Category>
+            (newCategory, cacheKey));
+
 
             return NoContent();
         }
